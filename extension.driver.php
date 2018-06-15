@@ -19,12 +19,22 @@
 			Symphony::Configuration()->set('salt', self::generatePassword() , 'encrypted_input');
 			Symphony::Configuration()->write();
 			// create settings table
-			return Symphony::Database()->query("CREATE TABLE `tbl_fields_encrypted_input` (
-			  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-			  `field_id` INT(11) UNSIGNED NOT NULL,
-			  PRIMARY KEY  (`id`),
-			  UNIQUE KEY `field_id` (`field_id`)
-			) TYPE=MyISAM");
+			return Symphony::Database()
+				->create('tbl_fields_encrypted_input')
+				->ifNotExists()
+				->fields([
+					'id' => [
+						'type' => 'int(11)',
+						'auto' => true,
+					],
+					'field_id' => 'int(11)',
+				])
+				->keys([
+					'id' => 'primary',
+					'field_id' => 'unique',
+				])
+				->execute()
+				->success();
 		}
 
 		public function uninstall() {
@@ -32,7 +42,11 @@
 			Symphony::Configuration()->remove('encrypted_input');
 			Symphony::Configuration()->write();
 			// remove field settings
-			Symphony::Database()->query("DROP TABLE `tbl_fields_encrypted_input`");
+			return Symphony::Database()
+				->drop('tbl_fields_encrypted_input')
+				->ifExists()
+				->execute()
+				->success();
 		}
 
 		public function getSubscribedDelegates() {

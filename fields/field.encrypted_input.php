@@ -18,8 +18,18 @@
 			$fields = array();
 			$fields['field_id'] = $id;
 
-			Symphony::Database()->query("DELETE FROM `tbl_fields_".$this->handle()."` WHERE `field_id` = '$id' LIMIT 1");
-			return Symphony::Database()->insert($fields, 'tbl_fields_' . $this->handle());
+			Symphony::Database()
+				->delete('tbl_fields_' . $this->handle())
+				->where(['field_id' => $id])
+				->limit(1)
+				->execute()
+				->success();
+
+			return Symphony::Database()
+				->insert('tbl_fields_' . $this->handle())
+				->values($fields)
+				->execute()
+				->success();
 		}
 
 		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null) {
@@ -36,18 +46,18 @@
 			$label = Widget::Label($this->get('label'));
 
 			if(empty($value)) {
-			    if($this->get('required') != 'yes') $label->appendChild(new XMLElement('i', __('Optional')));
-			    $label->appendChild(Widget::Input('fields'.$fieldnamePrefix.'['.$this->get('element_name').']'.$fieldnamePostfix, (strlen($value) != 0 ? $value : null)));
-			    if($flagWithError != null) {
-			        $wrapper->appendChild(Widget::Error($label, $flagWithError));
-			    } else {
-			        $wrapper->appendChild($label);
-			    }
+				if($this->get('required') != 'yes') $label->appendChild(new XMLElement('i', __('Optional')));
+				$label->appendChild(Widget::Input('fields'.$fieldnamePrefix.'['.$this->get('element_name').']'.$fieldnamePostfix, (strlen($value) != 0 ? $value : null)));
+				if($flagWithError != null) {
+					$wrapper->appendChild(Widget::Error($label, $flagWithError));
+				} else {
+					$wrapper->appendChild($label);
+				}
 			} else {
 				$wrapper->setAttribute('class', $wrapper->getAttribute('class') . ' file');
-			    $label->appendChild(new XMLElement('span', $value, array('class' => 'frame')));
-			    $label->appendChild(Widget::Input('fields'.$fieldnamePrefix.'['.$this->get('element_name').']'.$fieldnamePostfix, 'encrypted:' . $data['value'], 'hidden'));
-			    $wrapper->appendChild($label);
+				$label->appendChild(new XMLElement('span', $value, array('class' => 'frame')));
+				$label->appendChild(Widget::Input('fields'.$fieldnamePrefix.'['.$this->get('element_name').']'.$fieldnamePostfix, 'encrypted:' . $data['value'], 'hidden'));
+				$wrapper->appendChild($label);
 			}
 
 		}
@@ -80,48 +90,41 @@
 
 			// has already been encrypted
 			if(preg_match("/^encrypted:/", $data)) {
-			    return array(
-    				'value' => preg_replace("/^encrypted:/", '', $data),
-    			);
+				return array(
+					'value' => preg_replace("/^encrypted:/", '', $data),
+				);
 			}
 			else {
-			    return array(
-    				'value' => $this->encrypt($data),
-    			);
+				return array(
+					'value' => $this->encrypt($data),
+				);
 			}
 
 		}
 
 		function encrypt($string) {
-			return trim(
-				base64_encode(
-					mcrypt_encrypt(
-						MCRYPT_RIJNDAEL_256,
-						hash('sha256', Symphony::Configuration()->get('salt', 'encrypted_input'), true),
-						$string,
-						MCRYPT_MODE_ECB,
-						mcrypt_create_iv(
-							mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB),
-							MCRYPT_RAND
-						)
-					)
-				)
-			);
+			$key = hex2bin('5ae1b8a17bad4da4fdac796f64c16ecd');
+			$iv = hex2bin('34857d973953e44afb49ea9d61104d8c');
+
+			return base64_encode(openssl_encrypt(
+				$string,
+				'AES-256-CBC',
+				Symphony::Configuration()->get('salt', 'encrypted_input'),
+				OPENSSL_RAW_DATA,
+				$iv
+			));
 		}
 
 		function decrypt($string) {
-			return trim(
-				mcrypt_decrypt(
-					MCRYPT_RIJNDAEL_256,
-					hash('sha256', Symphony::Configuration()->get('salt', 'encrypted_input'), true),
-					base64_decode($string),
-					MCRYPT_MODE_ECB,
-					mcrypt_create_iv(
-						mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB),
-						MCRYPT_RAND
-					)
-				)
+			$key = hex2bin('5ae1b8a17bad4da4fdac796f64c16ecd');
+			$iv = hex2bin('34857d973953e44afb49ea9d61104d8c');
+
+			return openssl_decrypt(
+				base64_decode($string),
+				'AES-256-CBC',
+				Symphony::Configuration()->get('salt', 'encrypted_input'),
+				OPENSSL_RAW_DATA,
+				$iv
 			);
 		}
-
 	}

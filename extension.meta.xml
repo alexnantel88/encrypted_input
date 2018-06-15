@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension id="encrypted_input" status="released" xmlns="http://getsymphony.com/schemas/extension/1.0">
-	<name>Encrypted Input</name>
+	<name>Field: Encrypted</name>
 	<description>Encrypts text fields using `mcrypt` to keep them safe.</description>
 	<repo type="github">https://github.com/symphonists/encrypted_input</repo>
 	<link type="issues">https://github.com/symphonists/encrypted_input/issues</link>
@@ -22,6 +22,8 @@
 		<release version="2.0.0" date="TBA" min="4.0.0" max="4.x.x" php-min="5.6.x" php-max="7.x.x">
 			- Update for Symphony 4.x
 			- PHP 7 Compatibility
+			- Code refactoring for Database and EQFA
+			- Encrypt and Decrypt with openssl instead of mcrypt
 		</release>
 		<release version="1.2.1" date="2016-05-17" min="2.3.0" max="2.x.x">
 			- further 2.3+ Support
