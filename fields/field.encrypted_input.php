@@ -109,7 +109,7 @@
 			return base64_encode(openssl_encrypt(
 				$string,
 				'AES-256-CBC',
-				Symphony::Configuration()->get('salt', 'encrypted_input'),
+				hash('sha256', Symphony::Configuration()->get('salt', 'encrypted_input')),
 				OPENSSL_RAW_DATA,
 				$iv
 			));
@@ -122,7 +122,7 @@
 			return openssl_decrypt(
 				base64_decode($string),
 				'AES-256-CBC',
-				Symphony::Configuration()->get('salt', 'encrypted_input'),
+				hash('sha256', Symphony::Configuration()->get('salt', 'encrypted_input')),
 				OPENSSL_RAW_DATA,
 				$iv
 			);
